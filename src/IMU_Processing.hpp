@@ -1,3 +1,5 @@
+#ifndef IMU_PROCESSING_HPP
+#define IMU_PROCESSING_HPP
 #include <Eigen/Eigen>
 #include <cmath>
 #include <common_lib.h>
@@ -456,3 +458,4 @@ void ImuProcess::Process(const MeasureGroup &meas, StatesGroup &stat,
     only_propag(meas, stat, cur_pcl_un_);
   }
 }
+#endif

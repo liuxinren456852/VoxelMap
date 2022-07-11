@@ -8,7 +8,7 @@
 #include <execution>
 #include <openssl/md5.h>
 #include <pcl/common/io.h>
-#include <rosbag/bag.h>
+// #include <rosbag/bag.h>
 #include <stdio.h>
 #include <string>
 #include <unordered_map>
@@ -94,7 +94,7 @@ public:
   int octo_state_; // 0 is end of tree, 1 is not
   OctoTree *leaves_[8];
   double voxel_center_[3]; // x, y, z
-  std::vector<int> layer_point_size_;
+  std::vector<int> layer_point_size_; // all 5 actually
   float quater_length_;
   float planer_threshold_;
   int max_plane_update_threshold_;
@@ -102,7 +102,7 @@ public:
   int all_points_num_;
   int new_points_num_;
   int max_points_size_;
-  int max_cov_points_size_;
+  int max_cov_points_size_; //1000
   bool init_octo_;
   bool update_cov_enable_;
   bool update_enable_;
@@ -150,7 +150,7 @@ public:
     evalsReal = evals.real();
     Eigen::Matrix3f::Index evalsMin, evalsMax;
     evalsReal.rowwise().sum().minCoeff(&evalsMin);
-    evalsReal.rowwise().sum().maxCoeff(&evalsMax);
+    evalsReal.rowwise().sum().maxCoeff(&evalsMax); // get the index of min and max values
     int evalsMid = 3 - evalsMin - evalsMax;
     Eigen::Vector3d evecMin = evecs.real().col(evalsMin);
     Eigen::Vector3d evecMid = evecs.real().col(evalsMid);
@@ -302,7 +302,7 @@ public:
       plane->d = -(plane->normal(0) * plane->center(0) +
                    plane->normal(1) * plane->center(1) +
                    plane->normal(2) * plane->center(2));
-      plane->is_plane = false;
+      plane->is_plane = false; // only here is different
       plane->is_update = true;
     }
   }
@@ -388,7 +388,7 @@ public:
       }
     } else {
       if (plane_ptr_->is_plane) {
-        if (update_enable_) {
+        if (update_enable_) { // over 5 points, no more incremental update, which is time-consumming
           new_points_num_++;
           all_points_num_++;
           if (update_cov_enable_) {
@@ -578,14 +578,15 @@ void updateVoxelMap(const std::vector<pointWithCov> &input_points,
     float loc_xyz[3];
     for (int j = 0; j < 3; j++) {
       loc_xyz[j] = p_v.point[j] / voxel_size;
-      if (loc_xyz[j] < 0) {
+      if (loc_xyz[j] < 0) { // why minus one?
         loc_xyz[j] -= 1.0;
       }
     }
     VOXEL_LOC position((int64_t)loc_xyz[0], (int64_t)loc_xyz[1],
                        (int64_t)loc_xyz[2]);
     auto iter = feat_map.find(position);
-    if (iter != feat_map.end()) {
+    if (iter != feat_map.end()) 
+    {
       feat_map[position]->UpdateOctoTree(p_v);
     } else {
       OctoTree *octo_tree =
@@ -1088,6 +1089,7 @@ void pubVoxelMap(const std::unordered_map<VOXEL_LOC, OctoTree *> &voxel_map,
   loop.sleep();
 }
 
+// not used
 void pubPlaneMap(const std::unordered_map<VOXEL_LOC, OctoTree *> &feat_map,
                  const ros::Publisher &plane_map_pub) {
   OctoTree *current_octo = nullptr;
